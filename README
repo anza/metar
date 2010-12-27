@@ -1,0 +1,11 @@
+metar - METAR fetcher and parser
+--------------------------------
+
+This software is modified from standard debian package 'metar'.
+Original code by Kees Leune 2004-2005.
+
+Published under GNU General Public License.
+
+Requires libcurl and compiles with
+$ gcc -lcurl main.c metar.c
+

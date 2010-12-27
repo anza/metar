@@ -1,6 +1,8 @@
-/* metar.c -- metar decoder
-  $Id: metar.c,v 1.6 2006/10/30 22:18:58 kees-guest Exp $
-  Copyright 2004,2005 Kees Leune <kees@leune.org>
+/*
+  metar.c
+  metar - metar decoder
+  Original author Kees Leune <kees@leune.org> 2004 and 2005
+  Further modified by Antti Louko <antti@may.fi> 2010
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -26,7 +28,11 @@
 #include <unistd.h>
 #include "metar.h"
 
+extern int noconvert;
 extern int verbose;
+extern int shortdecode;
+extern int extra;
+extern int decode;
 
 struct observation {
   const char *code;
@@ -36,37 +42,38 @@ struct observation {
 typedef struct observation observation_t;
 
 struct observation observations[] = {
-  {"MI", "Shallow "},
-  {"BL", "Blowing "},
-  {"BC", "Patches "},
-  {"SH", "Showers "},
-  {"PR", "Partials "},
-  {"DR", "Drifting "},
-  {"TS", "Thunderstorm "},
-  {"FZ", "Freezing "},
-  {"DZ", "Drizzle "},
-  {"IC", "Ice Crystals "},
-  {"UP", "Unknown "},
-  {"RA", "Rain "},
-  {"PL", "Ice Pellets "},
-  {"SN", "Snow "},
-  {"GR", "Hail "},
-  {"SG", "Snow Grains "},
-  {"GS", "Small hail/snow pellets "},
-  {"BR", "Mist "},
-  {"SA", "Sand "},
-  {"FU", "Smoke "},
-  {"HZ", "Haze "},
-  {"FG", "Fog "},
-  {"VA", "Volcanic Ash "},
-  {"PY", "Spray "},
-  {"DU", "Widespread Dust "},
-  {"SQ", "Squall "},
-  {"FC", "Funnel Cloud "},
-  {"SS", "Sand storm "},
-  {"DS", "Dust storm "},
-  {"PO", "Well developed dust/sand swirls "},
-  {"VC", "Vicinity "}
+  {"MI", "shallow "},
+  {"BL", "blowing "},
+  {"BC", "patches "},
+  {"SH", "showers "},
+  {"PR", "partials "},
+  {"DR", "drifting "},
+  {"TS", "thunderstorm "},
+  {"FZ", "freezing "},
+  {"DZ", "drizzle "},
+  {"IC", "ice crystals "},
+  {"UP", "unknown "},
+  {"RA", "rain "},
+  {"PL", "ice pellets "},
+  {"SN", "snow "},
+  {"GR", "hail "},
+  {"SG", "snow grains "},
+  {"GS", "small hail/snow pellets "},
+  {"BR", "mist "},
+  {"SA", "sand "},
+  {"FU", "smoke "},
+  {"HZ", "haze "},
+  {"FG", "fog "},
+  {"VA", "volcanic ash "},
+  {"PY", "spray "},
+  {"DU", "widespread dust "},
+  {"SQ", "squall "},
+  {"FC", "funnel cloud "},
+  {"SS", "sand storm "},
+  {"DS", "dust storm "},
+  {"PO", "well developed dust/sand swirls "},
+  {"VC", "vicinity "},
+  {"RE", "recent "}
 };
 
 
@@ -110,6 +117,27 @@ static void add_observation(obslist_t **head, char *obs) {
   current->next = (obslist_t *)malloc(sizeof(obslist_t));
   current = current->next;
   current->obs = obs;
+  current->next = NULL;
+} // add_observation
+
+/* Add observation */
+static void add_stuff(stufflist_t **head, char *stuff) {
+  stufflist_t *current;
+  
+  if (*head == NULL) {
+    *head = malloc(sizeof(stufflist_t));
+    current = *head;
+    current->stuff = stuff;
+    current->next = NULL;
+    return;
+  }
+  current = *head;
+  while (current->next != NULL) 
+    current = current->next;
+  
+  current->next = (stufflist_t *)malloc(sizeof(stufflist_t));
+  current = current->next;
+  current->stuff = stuff;
   current->next = NULL;
 } // add_observation
 
@@ -158,7 +186,12 @@ static void analyse_token(char *token, metar_t *metar) {
   char tmp[99];
   char obspattern[255];
   char obsp[275];
-  
+  static int vis_thresold = 9999;
+
+  extern char wind_convfrom[5];
+  extern char wind_convto[5];
+  extern float wind_convfac;
+
   if (verbose) printf("Parsing token `%s'\n", token);
   
   // find station
@@ -201,7 +234,7 @@ static void analyse_token(char *token, metar_t *metar) {
   
   // find wind
   if ((int)metar->winddir == 0) {
-    if (regcomp(&preg, "^(VRB|[0-9]{3})([0-9]{2})(G[0-9]+)?(KT)$", 
+    if (regcomp(&preg, "^(VRB|[0-9]{3})([0-9]{2})(G[0-9]+)?(KT|MPS)$", 
 		REG_EXTENDED)) {
       perror("parseMetar");
       exit(errno);
@@ -222,25 +255,36 @@ static void analyse_token(char *token, metar_t *metar) {
       memset(tmp, 0x0, 99);
       if (size) {
 	memcpy(tmp, token+pmatch[2].rm_so, (size < 99 ? size : 99));
-	sscanf(tmp, "%d", (int*)&metar->windstr);
+	sscanf(tmp, "%f", (float*)&metar->windstr);
       }
       
       size = pmatch[3].rm_eo - pmatch[3].rm_so;
       memset(tmp, 0x0, 99);
       if (size) {
 	memcpy(tmp, token+pmatch[3].rm_so+1, (size < 99 ? size-1 : 99));
-	sscanf(tmp, "%d", (int*)&metar->windgust);
+	sscanf(tmp, "%f", (float*)&metar->windgust);
       } else {
 	metar->windgust = metar->windstr;
       }
       
       size = pmatch[4].rm_eo - pmatch[4].rm_so;
       if (size) {
-	memcpy(&metar->windunit, token+pmatch[4].rm_so, 
-	       (size < 5 ? size : 5));
+	memcpy(&metar->windunit, token+pmatch[4].rm_so, (size < 5 ? size : 5));
+      }
+
+      /* stuff for converting wind from wind_convfrom to wind_convto */
+      /* if noconvert is not specified AND wind unit is knots, do conversion */
+      if ( (!noconvert) && (strcmp(metar->windunit, wind_convfrom) == 0) ) {
+
+	/* although these are pointers, their type is float and we can
+	 multiply them with another float */
+	metar->windstr = (metar->windstr) * wind_convfac;
+	metar->windgust = (metar->windgust) * wind_convfac;
+	/* let's hope we didn't mess anything up.. */
+	strcpy(metar->windunit, wind_convto);
       }
       
-      if (verbose) printf("   Found Winddir/str/gust/unit %d/%d/%d/%s\n", 
+      if (verbose) printf("   Found Winddir/str/gust/unit %d/%f/%f/%s\n", 
 			  metar->winddir, metar->windstr, metar->windgust,
 			  metar->windunit);
       return;
@@ -265,10 +309,17 @@ static void analyse_token(char *token, metar_t *metar) {
 	memcpy(&metar->visunit, token+pmatch[2].rm_so, 
 	       (size < 5 ? size : 5));
       } else 
-	strncpy(metar->visunit, "M", 1);
-      
-      if (verbose) printf("   Visibility range/unit %d/%s\n", metar->vis, 
-			  metar->visunit);
+	strncpy(metar->visunit, "m", 1);
+
+      /* return -1 as visibility range if it's 9999 M (>10km) */
+      /* it's easier to do it this way because we are fiddling with this
+       again at CAVOK and it's easier to check it upon printing from main.c */
+      if (metar->vis == vis_thresold) {
+	metar->vis = -1;
+	if (verbose) printf("   Visibility over 10 km\n");
+      }	else if (verbose) {
+	printf("   Visibility range/unit %d/%s\n", metar->vis, metar->visunit);
+      }
       return;
     }
   } // visibility
@@ -319,7 +370,7 @@ static void analyse_token(char *token, metar_t *metar) {
       if (strncmp(tmp, "Q", 1) == 0)
 	strncpy(metar->qnhunit, "hPa", 3);
       else if (strncmp(tmp, "A", 1) == 0) {
-	strncpy(metar->qnhunit, "\"Hg", 3);
+	strncpy(metar->qnhunit, "inHg", 4);
 	metar->qnhfp = 2;
       }
       else 
@@ -338,7 +389,7 @@ static void analyse_token(char *token, metar_t *metar) {
   } // qnh
   
   // multiple cloud layers possible
-  if (regcomp(&preg, "^(SKC|FEW|SCT|BKN|OVC)([0-9]{3})$", REG_EXTENDED)) {
+  if (regcomp(&preg, "^(VV|SKC|FEW|SCT|BKN|OVC)([0-9]{3})$", REG_EXTENDED)) {
     perror("parsemetar");
     exit(errno);
   }
@@ -366,12 +417,36 @@ static void analyse_token(char *token, metar_t *metar) {
   get_observations_pattern(obspattern, 255);
   snprintf(obsp, 255, "^([+-]?)((%s)+)$", obspattern);
   
+
+  /* these observations are parsed separately since an algorithm to do
+     it would be nasty. these are not exactly weather stuff so i made
+     them own struct and that way it's easy to omit these from reports */
+  /* it should be easy to add stuff observations afterwards anyway */
   // cannot to CAVOK as an observation in the array because it is more than
   // 2 characters long and that screw up my algorithm
   if (strstr(token, "CAVOK") != NULL) {
-    add_observation((obslist_t **)&metar->obs, "Ceiling and visibility OK");
+    add_stuff((stufflist_t **)&metar->stuff, "ceiling and visibility OK");
+    /* yeah, CAVOK means visibility is > 10 km so hit it */
+    metar->vis = -1;
+    if (verbose) {
+      printf("   Ceiling and visibility OK\n");
+      printf("   Visibility > 10 km\n");
+    }
+    return;
+  };
+
+  if (strstr(token, "SNOCLO") != NULL) {
+    add_stuff((stufflist_t **)&metar->stuff, "aerodrome closed due to snow");
+    if (verbose) printf("   Aerodrome closed due to snow\n");
+    return;
   };
   
+  if (strstr(token, "NOSIG") != NULL) {
+    add_stuff((stufflist_t **)&metar->stuff, "no significant change expected within 2 hours");
+    if (verbose) printf("   No significant change expected within 2 hours\n");
+    return;
+  };
+
   if (regcomp(&preg, obsp, REG_EXTENDED)) {
     perror("parsemetar");
     exit(errno);
@@ -384,8 +459,8 @@ static void analyse_token(char *token, metar_t *metar) {
     size=pmatch[1].rm_eo - pmatch[1].rm_so;
     memset(tmp, 0x0, 99);
     memcpy(tmp, token+pmatch[1].rm_so, (size < 1 ? size : 1));
-    if (tmp[0] == '-') strncpy(obs, "Light ", 99);
-    else if (tmp[0] == '+') strncpy(obs, "Heavy ", 99);
+    if (tmp[0] == '-') strncpy(obs, "light ", 99);
+    else if (tmp[0] == '+') strncpy(obs, "heavy ", 99);
     
     // split up in groups of 2 chars and decode per group
     size=pmatch[2].rm_eo - pmatch[2].rm_so;
@@ -422,7 +497,7 @@ void parse_Metar(char *report, metar_t *metar) {
   char *token;
   char *last;
   
-  // clear resutls
+  /* clear results */
   memset(metar, 0x0, sizeof(metar_t));
   
   // strip trailing newlines
@@ -438,21 +513,23 @@ void parse_Metar(char *report, metar_t *metar) {
 } // parse_Metar
 
 
-/* parse the NOAA report contained in the noaa_data buffer. Place a parsed
+/* parse the NOAA report contained in the noaa_data buffer. Place the parsed
  * data in the metar struct. 
  */
-void parse_NOAA_data(char *noaa_data, noaa_t *noaa) {
+int parse_NOAA_data(char *noaa_data, noaa_t *noaa) {
   regex_t preg;
   regmatch_t pmatch[10];
   int size;
   
   if (regcomp(&preg, "^([0-9/]+ [0-9:]+)[[:space:]]+(.*)$", REG_EXTENDED)) {
     fprintf(stderr, "Unable to compile regular expression.\n");
-    exit(100);
+    exit(errno);
   }
   
   if (regexec(&preg, noaa_data, 10, pmatch, 0)) {
-    fprintf(stderr, "METAR pattern not found in NOAA data.\n");
+    /* moved to main.c where the return value of this function is checked:
+    fprintf(stderr, "METAR pattern not found in NOAA data.\n"); */
+    return 1;
   } else {
     memset(noaa, 0x0, sizeof(noaa_t));
     /* date */
@@ -461,7 +538,8 @@ void parse_NOAA_data(char *noaa_data, noaa_t *noaa) {
     
     /* metar */
     size = pmatch[2].rm_eo - pmatch[2].rm_so;
-    memcpy(noaa->report, noaa_data+pmatch[2].rm_so, 
+    memcpy(noaa->report, noaa_data+pmatch[2].rm_so,
 	   (size < 1024 ? size : 1024));
+    return 0;
   }
 } // parse_NOAA_data

@@ -1,6 +1,8 @@
-/* metar.c -- metar decoder
-  $Id: metar.h,v 1.6 2006/04/05 20:30:28 kees-guest Exp $
-  Copyright 2004,2005 Kees Leune <kees@leune.org>
+/*
+  metar.h
+  metar - metar decoder
+  Original author Kees Leune <kees@leune.org> 2004 and 2005
+  Further modified by Antti Louko <antti@may.fi> 2010
   
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -38,11 +40,17 @@ typedef struct cloudlist_el {
   struct cloudlist_el *next;
 } cloudlist_t;
 
-/* linked list of clouds */
+/* linked list of observations */
 typedef struct obslist_el {
   char *obs;
   struct obslist_el *next;
 } obslist_t;
+
+/* linked list of other stuff */
+typedef struct stufflist_el {
+  char *stuff;
+  struct stufflist_el *next;
+} stufflist_t;
 
 /* reports will be translated to this struct */
 typedef struct {
@@ -50,10 +58,10 @@ typedef struct {
   int   day;
   int   time;
   int   winddir;  // winddir == -1 signifies variable winds
-  int   windstr;
-  int   windgust;
+  float windstr;
+  float windgust;
   char  windunit[5];
-  int   vis;
+  int   vis; // vis == -1 signifies visibility greater than 10 km
   char  visunit[5];
   int   qnh;
   char  qnhunit[5];
@@ -62,6 +70,7 @@ typedef struct {
   int   dewp;
   cloudlist_t *clouds;
   obslist_t *obs;
+  stufflist_t *stuff;
 } metar_t;
 
 typedef struct {
@@ -77,4 +86,4 @@ void parse_Metar(char *report, metar_t *metar);
 /* parse the NOAA report contained in the noaa_data buffer. Place a parsed
  * data in the metar struct. 
  */
-void parse_NOAA_data(char *noaa_data, noaa_t *noaa);  
+int parse_NOAA_data(char *noaa_data, noaa_t *noaa);  

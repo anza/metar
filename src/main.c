@@ -1,6 +1,8 @@
-/* metar.c -- metar decoder
-  $Id: main.c,v 1.9 2006/04/05 20:30:28 kees-guest Exp $
-  Copyright 2004,2005 Kees Leune <kees@leune.org>
+/*
+  main.c
+  metar - metar decoder
+  Original author Kees Leune <kees@leune.org> 2004 and 2005
+  Further modified by louk <antti@may.fi> 2010
   
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -30,9 +32,22 @@
 /* global variable so we dont have to mess with parameter passing */
 char noaabuffer[METAR_MAXSIZE];
 
-/* command line args */
+/* command line args; everything unset at default */
+int rawmetar=0;
 int decode=0;
+int shortdecode=0;
 int verbose=0;
+int noconvert=0;
+int extra=0;
+
+/** wind unit conversion variables to be made in metar.c **/
+ /* from? if this matches, the conversion will be made */
+ const char wind_convfrom[5] = "KT";
+ /* to? if you change this, make sure your unit fits into char windunit[5]: */
+ const char wind_convto[5] = "m/s";
+ /* what is the conversion factor? */
+ const float wind_convfac = 0.514444;
+
 
 char *strupc(char *line) {
    char *p;
@@ -42,13 +57,18 @@ char *strupc(char *line) {
 
 /* show brief usage info */
 void usage(char *name) {
-  printf("$Id: main.c,v 1.9 2006/04/05 20:30:28 kees-guest Exp $\n");
-  printf("Usage: %s options\n", name);
+  printf("metar 1.91 %s %s\n", __DATE__, __TIME__);
+  printf("Usage: %s [options] stations\n", name);
   printf("Options\n");
-  printf("   -d        decode metar\n");
+  printf("   -b        decode briefly (default)\n");
+  printf("   -d        decode METAR\n");
+  printf("   -e        decode briefly with extra information\n");
   printf("   -h        show this help\n");
+  printf("   -n        don't convert wind from %s to %s\n",
+	 wind_convfrom, wind_convto);
+  printf("   -r        print raw METAR data\n");
   printf("   -v        be verbose\n");
-  printf("Example: %s -d ehgr\n", name);
+  printf("Example: %s -d efjy\n", name);
 }
 
 
@@ -67,7 +87,6 @@ int download_Metar(char *station) {
   CURLcode res;
   char url[URL_MAXSIZE];
   char tmp[URL_MAXSIZE];
-  
   curlhandle = curl_easy_init();
   if (!curlhandle) return 1;
   
@@ -90,7 +109,11 @@ int download_Metar(char *station) {
   res = curl_easy_perform(curlhandle);
   curl_easy_cleanup(curlhandle);
   
-  return 0;
+  if (res == 0) return 0;
+  else {
+    fprintf(stderr, "CURL error %i while retrieving URL\n", res);
+    return 1;
+  }
 }
 
 
@@ -98,7 +121,9 @@ int download_Metar(char *station) {
 void decode_Metar(metar_t metar) {
   cloudlist_t *curcloud;
   obslist_t   *curobs; 
+  stufflist_t *curstuff;
   int n = 0;
+  int m = 0;
   double qnh;
   
   printf("Station       : %s\n", metar.station);
@@ -114,9 +139,17 @@ void decode_Metar(metar_t metar) {
     n = ((metar.winddir * 4 + 45) / 90) % 16;
     printf("Wind direction: %i (%s)\n", metar.winddir, winddirs[n]);
   }
-  printf("Wind speed    : %i %s\n", metar.windstr, metar.windunit);
-  printf("Wind gust     : %i %s\n", metar.windgust, metar.windunit);
-  printf("Visibility    : %i %s\n", metar.vis, metar.visunit);
+  printf("Wind speed    : %.1f %s\n", metar.windstr, metar.windunit);
+  if (metar.windstr != metar.windgust) {
+  printf("Wind gust     : %.1f %s\n", metar.windgust, metar.windunit);
+  }
+
+  /* visibility: treat 9999 M specially */
+  if (metar.vis == -1) {
+    printf("Visibility    : > 10 km\n");
+  } else {
+    printf("Visibility    : %i %s\n", metar.vis, metar.visunit);
+  }
   printf("Temperature   : %i C\n", metar.temp);
   printf("Dewpoint      : %i C\n", metar.dewp);
   
@@ -135,18 +168,80 @@ void decode_Metar(metar_t metar) {
   }
   if (!n) printf("\n");
   
-  printf("Phenomena     : ");
+  printf("Conditions    : ");
   n = 0;
   for (curobs = metar.obs; curobs != NULL; curobs=curobs->next) {
     if (n++ == 0) printf("%s\n", curobs->obs);
     else printf("%15s %s\n", " ",curobs->obs);
   }
-  if (!n) printf("\n");
+  m = 0;
+  for (curstuff = metar.stuff; curstuff != NULL; curstuff=curstuff->next) {
+    if (m++ == 0) printf("%s\n", curstuff->stuff);
+    else printf("%15s %s\n", " ",curstuff->stuff);
+  }
+    if (!n && !m) printf("\n");
+}
+
+
+/* decode METAR without line breaks */
+void shortdecode_Metar(metar_t metar) {
+  cloudlist_t *curcloud;
+  obslist_t *curobs;
+  stufflist_t *curstuff;
+  int n = 0;
+  double qnh;
+
+  printf("%s day %i time %02i:%02i", metar.station, metar.day, metar.time/100, metar.time%100);
+  printf(", temp %i C", metar.temp);
+  printf(", ");
+
+  /* if wind gust is different from wind str, include indication */
+  if (metar.windgust != metar.windstr) printf("gusty ");
+
+  printf("wind %.1f %s", metar.windstr, metar.windunit);
+
+  if (metar.winddir != -1) {
+    static const char *winddirs[] = {
+      "N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
+      "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"
+    };
+    n = ((metar.winddir * 4 + 45) / 90) % 16;
+    printf(" from %s", winddirs[n]);
+  }
+
+  if (extra) {
+    qnh = metar.qnh;
+    for (n = 0; n < metar.qnhfp; n++)
+      qnh /= 10.0;
+    printf(", ");
+    printf("pressure %.*f %s", metar.qnhfp, qnh, metar.qnhunit);
+  }
+  
+  /* print observations */
+  for (curobs = metar.obs; curobs != NULL; curobs=curobs->next) {
+    printf(", %s", curobs->obs);
+  }
+
+  if (extra) {
+    for (curstuff = metar.stuff; curstuff != NULL; curstuff=curstuff->next) {
+      printf(", %s", curstuff->stuff);
+    }
+    
+    n = 0;
+    for (curcloud = metar.clouds; curcloud != NULL; curcloud=curcloud->next) {
+      if (n++ == 0) printf(", clouds: %s at %d00 ft;", 
+			   curcloud->cloud->type, curcloud->cloud->level);
+      else printf(" %s at %d00 ft;",
+		  curcloud->cloud->type, curcloud->cloud->level);
+    }
+  }
+  printf("\n");
 }
 
 
 int main(int argc, char* argv[]) {
-  int  res=0;
+  int i=0;
+  int res=0;
   metar_t metar;
   noaa_t  noaa;
   
@@ -157,7 +252,7 @@ int main(int argc, char* argv[]) {
     return 1;
   }
   
-  while ((res = getopt(argc, argv, "hvd")) != -1) {
+  while ((res = getopt(argc, argv, "?hvbdern")) != -1) {
     switch (res) {
     case '?':
       usage(argv[0]);
@@ -167,8 +262,21 @@ int main(int argc, char* argv[]) {
       usage(argv[0]);
       return 0;
       break;
+    case 'b':
+      shortdecode=1;
+      break;
     case 'd':
       decode=1;
+      break;
+    case 'e':
+      shortdecode=1;
+      extra=1;
+      break;
+    case 'n':
+      noconvert=1;
+      break;
+    case 'r':
+      rawmetar=1;
       break;
     case 'v':
       verbose=1;
@@ -176,25 +284,54 @@ int main(int argc, char* argv[]) {
     }
   }
   
+  /* if we aren't given any output options, default to shortdecode */
+  if ( !decode && !rawmetar && !shortdecode ) shortdecode = 1;
+  
   curl_global_init(CURL_GLOBAL_DEFAULT);
   
   // clear out metar and noaa
   memset(&metar, 0x0, sizeof(metar_t));
   memset(&noaa, 0x0, sizeof(noaa_t));
   
-  while (optind < argc) {
-    res = download_Metar(argv[optind++]);
-    if (res == 0) {
-      parse_NOAA_data(noaabuffer, &noaa);
-      printf("%s", noaa.report);
-      if (decode) {
-	parse_Metar(noaa.report, &metar);
-	decode_Metar(metar);
-      }
-    } else 
-      printf("Error: %d\n", res);
+  
+  /* we need at least one parameter if options are given */
+  if (optind == argc) {
+    usage(argv[0]);
+    return 1;
   }
   
+  /* now get metar data from each parameter */
+  for (i = optind; i < argc; i++) {
+
+    /* if successfully downloaded... */
+    if (download_Metar(argv[i]) == 0) {
+
+      /* ...and parsed NOAA data, parse each METAR report if needed and
+	 print stuff out */
+      if (parse_NOAA_data(noaabuffer, &noaa) == 0) {
+	if (rawmetar) printf("%s", noaa.report);
+	if (decode|shortdecode) {
+	  parse_Metar(noaa.report, &metar);
+	}
+	if (decode) {
+	  decode_Metar(metar);
+	}
+	if (shortdecode) {
+	  shortdecode_Metar(metar);
+	}
+      } else {
+	/* parse_NOAA_data() returns 1 when station isn't found */
+	printf("METAR station %s not found in NOAA data.\n",
+		argv[i]);
+      }
+
+    } else {
+      /* download_Metar() returns 1 and prints the error code of CURL
+	 if something has gone wrong */
+      printf("METAR data download failed.\n");
+    }
+
+  }
   return 0;
 }
 

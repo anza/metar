@@ -2,7 +2,7 @@
   main.c
   metar - metar decoder
   Original author Kees Leune <kees@leune.org> 2004 and 2005
-  Further modified by louk <antti@may.fi> 2010
+  Further modified by Antti Louko <antti@may.fi> 2010
   
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -223,6 +223,12 @@ void shortdecode_Metar(metar_t metar) {
   }
 
   if (extra) {
+    if (metar.vis == -1) {
+      printf(", visibility over 10 km");
+    } else {
+      printf(", visibility %i %s", metar.vis, metar.visunit);
+    }
+
     for (curstuff = metar.stuff; curstuff != NULL; curstuff=curstuff->next) {
       printf(", %s", curstuff->stuff);
     }

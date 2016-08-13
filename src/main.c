@@ -2,18 +2,18 @@
   main.c
   metar - metar decoder
   Original author Kees Leune <kees@leune.org> 2004 and 2005
-  Further modified by Antti Louko <antti@may.fi> 2010
-  
+  Further modified by Antti Louko <antti@may.fi> 2010, 2016
+
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation; either version 2 of the License, or
   (at your option) any later version.
-  
+
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -57,7 +57,7 @@ char *strupc(char *line) {
 
 /* show brief usage info */
 void usage(char *name) {
-  printf("metar 1.91 %s %s\n", __DATE__, __TIME__);
+  printf("metar 1.94 %s %s\n", __DATE__, __TIME__);
   printf("Usage: %s [options] stations\n", name);
   printf("Options\n");
   printf("   -b        decode briefly (default)\n");
@@ -89,7 +89,7 @@ int download_Metar(char *station) {
   char tmp[URL_MAXSIZE];
   curlhandle = curl_easy_init();
   if (!curlhandle) return 1;
-  
+
   memset(tmp, 0x0, URL_MAXSIZE);
   if (getenv("METARURL") == NULL) {
     strncpy(tmp, METARURL, URL_MAXSIZE);
@@ -97,18 +97,18 @@ int download_Metar(char *station) {
     strncpy(tmp, getenv("METARURL"), URL_MAXSIZE);
     if (verbose) printf("Using environment variable METARURL: %s\n", tmp);
   }
-  
-  if (snprintf(url, URL_MAXSIZE, "%s/%s.TXT", tmp, strupc(station)) < 0) 
+
+  if (snprintf(url, URL_MAXSIZE, "%s/%s.TXT", tmp, strupc(station)) < 0)
     return 1;
   if (verbose) printf("Retrieving URL %s\n", url);
-  
+
   curl_easy_setopt(curlhandle, CURLOPT_URL, url);
   curl_easy_setopt(curlhandle, CURLOPT_WRITEFUNCTION, receiveData);
   memset(noaabuffer, 0x0, METAR_MAXSIZE);
-  
+
   res = curl_easy_perform(curlhandle);
   curl_easy_cleanup(curlhandle);
-  
+
   if (res == 0) return 0;
   else {
     fprintf(stderr, "CURL error %i while retrieving URL\n", res);
@@ -120,12 +120,12 @@ int download_Metar(char *station) {
 /* decode metar */
 void decode_Metar(metar_t metar) {
   cloudlist_t *curcloud;
-  obslist_t   *curobs; 
+  obslist_t   *curobs;
   stufflist_t *curstuff;
   int n = 0;
   int m = 0;
   double qnh;
-  
+
   printf("Station       : %s\n", metar.station);
   printf("Day           : %i\n", metar.day);
   printf("Time          : %02i:%02i UTC\n", metar.time/100, metar.time%100);
@@ -144,7 +144,7 @@ void decode_Metar(metar_t metar) {
   printf("Wind gust     : %.1f %s\n", metar.windgust, metar.windunit);
   }
 
-  /* visibility: treat 9999 M specially */
+  /* visibility: treat 9999 m specially */
   if (metar.vis == -1) {
     printf("Visibility    : > 10 km\n");
   } else {
@@ -152,22 +152,22 @@ void decode_Metar(metar_t metar) {
   }
   printf("Temperature   : %i C\n", metar.temp);
   printf("Dewpoint      : %i C\n", metar.dewp);
-  
+
   qnh = metar.qnh;
   for (n = 0; n < metar.qnhfp; n++)
     qnh /= 10.0;
   printf("Pressure      : %.*f %s\n", metar.qnhfp, qnh, metar.qnhunit);
-  
+
   printf("Clouds        : ");
   n = 0;
   for (curcloud = metar.clouds; curcloud != NULL; curcloud=curcloud->next) {
-    if (n++ == 0) printf("%s at %d00 ft\n", 
+    if (n++ == 0) printf("%s at %d00 ft\n",
 			 curcloud->cloud->type, curcloud->cloud->level);
-    else printf("%15s %s at %d00 ft\n", 
+    else printf("%15s %s at %d00 ft\n",
 		" ",curcloud->cloud->type, curcloud->cloud->level);
   }
   if (!n) printf("\n");
-  
+
   printf("Conditions    : ");
   n = 0;
   for (curobs = metar.obs; curobs != NULL; curobs=curobs->next) {
@@ -216,7 +216,7 @@ void shortdecode_Metar(metar_t metar) {
     printf(", ");
     printf("pressure %.*f %s", metar.qnhfp, qnh, metar.qnhunit);
   }
-  
+
   /* print observations */
   for (curobs = metar.obs; curobs != NULL; curobs=curobs->next) {
     printf(", %s", curobs->obs);
@@ -232,10 +232,10 @@ void shortdecode_Metar(metar_t metar) {
     for (curstuff = metar.stuff; curstuff != NULL; curstuff=curstuff->next) {
       printf(", %s", curstuff->stuff);
     }
-    
+
     n = 0;
     for (curcloud = metar.clouds; curcloud != NULL; curcloud=curcloud->next) {
-      if (n++ == 0) printf(", clouds: %s at %d00 ft;", 
+      if (n++ == 0) printf(", clouds: %s at %d00 ft;",
 			   curcloud->cloud->type, curcloud->cloud->level);
       else printf(" %s at %d00 ft;",
 		  curcloud->cloud->type, curcloud->cloud->level);
@@ -250,14 +250,14 @@ int main(int argc, char* argv[]) {
   int res=0;
   metar_t metar;
   noaa_t  noaa;
-  
+
   /* get options */
   opterr=0;
   if (argc == 1) {
     usage(argv[0]);
     return 1;
   }
-  
+
   while ((res = getopt(argc, argv, "?hvbdern")) != -1) {
     switch (res) {
     case '?':
@@ -289,23 +289,23 @@ int main(int argc, char* argv[]) {
       break;
     }
   }
-  
+
   /* if we aren't given any output options, default to shortdecode */
   if ( !decode && !rawmetar && !shortdecode ) shortdecode = 1;
-  
+
   curl_global_init(CURL_GLOBAL_DEFAULT);
-  
+
   // clear out metar and noaa
   memset(&metar, 0x0, sizeof(metar_t));
   memset(&noaa, 0x0, sizeof(noaa_t));
-  
-  
+
+
   /* we need at least one parameter if options are given */
   if (optind == argc) {
     usage(argv[0]);
     return 1;
   }
-  
+
   /* now get metar data from each parameter */
   for (i = optind; i < argc; i++) {
 

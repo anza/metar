@@ -2,18 +2,18 @@
   metar.h
   metar - metar decoder
   Original author Kees Leune <kees@leune.org> 2004 and 2005
-  Further modified by Antti Louko <antti@may.fi> 2010
-  
+  Further modified by Antti Louko <antti@may.fi> 2010, 2016
+
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation; either version 2 of the License, or
   (at your option) any later version.
-  
+
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -26,7 +26,7 @@
 #define METAR_MAXSIZE 512
 
 /* where to fetch reports */
-#define METARURL "http://weather.noaa.gov/pub/data/observations/metar/stations"
+#define METARURL "http://tgftp.nws.noaa.gov/data/observations/metar/stations"
 
 /* clouds */
 typedef struct {
@@ -84,6 +84,6 @@ typedef struct {
 void parse_Metar(char *report, metar_t *metar);
 
 /* parse the NOAA report contained in the noaa_data buffer. Place a parsed
- * data in the metar struct. 
+ * data in the metar struct.
  */
-int parse_NOAA_data(char *noaa_data, noaa_t *noaa);  
+int parse_NOAA_data(char *noaa_data, noaa_t *noaa);

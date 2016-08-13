@@ -1,7 +1,10 @@
-OBJS = src/main.c src/metar.c src/metar.h
+OBJS = src/main.c src/metar.c
 CC = cc
 CFLAGS = -Wall -lcurl
 OUT = metar
+
+# Uncomment on BSD
+#BSDFLAGS = -I/usr/local/include -L/usr/local/lib
 
 prefix = /usr/local
 binprefix =
@@ -11,7 +14,7 @@ mandir = $(prefix)/share/man/man1
 all: metar
 
 metar: $(OBJS)
-	$(CC) $(CFLAGS) $(OBJS) -o $(OUT)
+	$(CC) $(CFLAGS) $(BSDFLAGS) $(OBJS) -o $(OUT)
 	cat metar.1 | gzip > metar.1.gz
 
 install: 

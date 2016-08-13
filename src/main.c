@@ -191,7 +191,7 @@ void shortdecode_Metar(metar_t metar) {
   int n = 0;
   double qnh;
 
-  printf("%s day %i time %02i:%02i", metar.station, metar.day, metar.time/100, metar.time%100);
+  printf("%s day %i time %02i:%02i UTC", metar.station, metar.day, metar.time/100, metar.time%100);
   printf(", temp %i C", metar.temp);
   printf(", ");
 

@@ -2,26 +2,29 @@
 .\" man page for metar(1)
 .\" nroff -man -Tascii metar.1 | less
 
-.TH METAR 1 "December 2010" "metar 1.91" "User Commands" "metar"
+.TH METAR 1 "August 2016" "metar 1.94" "User Commands" "metar"
 .SH NAME
-metar \- fetch and format METAR weather reports
+metar \- fetch aerodrome routine meteorological reports (METAR) and present the information within.
 
 .SH SYNOPSIS
 .B metar [-dehnrsv]
-.I station
+.I station[s]
 .B ...
 
 .SH DESCRIPTION
+METAR is the name of the code for an aerodrome routine meteorological report.
 .B metar
-fetches the information of current weather conditions of specified weather stations and optionally decodes them into more easily readable format.
+fetches the information of current weather conditions of specified weather stations and decodes them into trivially readable format.
 
-METAR format is a way to display a comprehensive overview of weather in a compact report.
-Because METAR is widely used by aviation we refer to weather stations with the codes of airports when we want to get a report from a certain site.
+METAR is a way to display a comprehensive overview of current weather conditions in a compact report.
+Because METAR is primarily used by aviation we refer to weather stations with the codes of airports when we want to get a report from a certain site.
 The codes are assigned by ICAO (International Civil Aviation Organization) and most (but not all) ICAO-coded aerodromes have a METAR reporting system whose data can be accessed for example with this tool. Please check the end of this file to obtain a list of all airport ICAO codes.
+
+Please remember that the exact weather conditions at your location may differ greatly from the observation data unless you are located in the immediate vicinity of the observation site. Usually the information is nonetheless a passable approximation of the weather conditions for the surrounding area too.
 
 By default the program gets METAR data with
 .BR libcurl (3)
-provided by NOAA (National Oceanic and Atmospheric Administration). There are a couple of ways to decode the data, if desired.
+provided by NOAA (National Oceanic and Atmospheric Administration). There are a couple of formats to print out the decoded data.
 
 .SH OPTIONS
 Options can be combined:
@@ -29,10 +32,10 @@ Options can be combined:
 .I station
 would give you raw METAR data and extended brief report. Adding
 .B \-d
-would add full decoded report. You can also give more than one station and get desired report from each.
+would add full decoded report. You can also give more than one station and get the desired report from each.
 
 .IP -b
-Decode retrieved METAR report with the most essential information on a single line (no line breaks). Since we wanted just a brief report, this will print all weather conditions but not e.g. NOSIG, CAVOK (although it sets the visibility to be > 10 km) or SNOCLO.
+Briefly decode retrieved METAR report with the most essential information on a single line (no line breaks). This will print all weather conditions but not the longer explanations resulting from e.g. NOSIG, CAVOK or SNOCLO.
 
 This is the default when no output options are given.
 
@@ -56,11 +59,9 @@ can provide:
 * other conditions.
 
 .IP -e
-Implies
+Briefly decode with extra information. Implies
 .B -b
-and gives some extra information: barometric pressure, clouds and other non-weather stuff that
-.B -b
-won't print.
+and prints barometric pressure, clouds, and other non-weather stuff in addition.
 
 .IP -h
 Show quick usage guide.
@@ -68,13 +69,13 @@ Show quick usage guide.
 .IP -n
 If implied,
 .B metar
-will not attempt to convert wind units.
+will not attempt to convert wind units. By default it always converts knots (KT) to metres per second upon detecting such a unit.
 
 .IP -r
 Print raw METAR data string.
 
 .IP -v
-Show what's going on during report fetching and parsing.
+Show verbose information during report fetching and parsing.
 
 .SH FILES
 .B metar
@@ -100,9 +101,10 @@ was not able to retrieve information for station FOOO. Most likely you requested
 .BR libcurl (3)
 was unable to get requested URL. Most likely you were not connected to internet or you hadn't set your proxy correct. Refer to libcurl documentation about given error code.
 
-.SH BUGS
+.SH TODO
+Test and sanitize
 .B metar
-won't sanitize user input.
+'s handling of user input.
 
 So far,
 .B metar
@@ -110,24 +112,38 @@ will also not parse:
 .br
 * visibilities given in fractions (e.g. 1/4SM)
 .br
-* forecasts (TEMPO, PROB, BECMG)
+* trend forecasts (TEMPO, PROB, BECMG)
 .br
-* runway stuff
+* runway stuff.
 
-Also automatic mapping between ICAO code and station location would be nice so user wouldn't have to know station codes at all...
+Add automatic mapping between ICAO codes and station name.
 
 .SH AUTHOR
 Original author of
 .B metar
 and this man page is Kees Leune <kees@leune.org>.
-Man page rewritten and
+Man page completely rewritten and
 .B metar
 further improved by Antti Louko <antti@may.fi>.
 
 .SH SEE ALSO
-List of raw METAR datafiles:
-.B http://weather.noaa.gov/pub/data/observations/metar/stations
+Raw METAR data file directory:
+.B http://tgftp.nws.noaa.gov/data/observations/metar/stations
 
-List of ICAO airport codes:
+List of weather observation stations, including possible ICAO airport codes:
 .B http://weather.noaa.gov/data/nsd_bbsss.txt
 
+.SH REFERENCES
+.B WMO-No. 306
+.br
+Manual on Codes: International Codes, Volume I.1,
+.I FM 15-XV METAR.
+.br
+World Meteorological Organization (2011 u. 2015).
+
+.B FMH-1
+.br
+Federal Meteorological Handbook No.1 Surface Weather Observations & Reports
+.I Ch. 12: Coding
+.br
+OFCM, U.S. Dept. of Commerce/NOAA (2005).

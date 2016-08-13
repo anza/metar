@@ -1,7 +1,7 @@
-# metar - METAR fetcher and parser
+# metar - aerodrome routine meteorological reports (METAR) fetcher and parser
 
-*metar* fetches the information of current weather conditions of 
-specified weather stations and optionally decodes them into more easily 
+*metar* fetches the information of current weather conditions of
+specified weather observation stations and decodes it into more easily
 readable format.
 
 ## Requirements
@@ -32,10 +32,14 @@ In case of problems, man page can manually be formatted and viewed by:
 
     groff -Tascii -man metar.1 | less
 
+## TODO
+
+* Add automatic mapping between ICAO codes and station name.
+* Add timezone support or relative time support ("n minutes ago")
+
 ## Copyright
 This software is modified from standard Debian package ```metar```.
 Original code by Kees Leune 2004-2005, improved by Antti Louko <antti@may.fi>
 2010, 2013, 2016.
 
 Published under GNU General Public License.
-

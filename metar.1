@@ -6,10 +6,12 @@
 .SH NAME
 metar \- fetch aerodrome routine meteorological reports (METAR) and present the information within.
 
+
 .SH SYNOPSIS
 .B metar [-dehnrsv]
 .I station[s]
 .B ...
+
 
 .SH DESCRIPTION
 METAR is the name of the code for an aerodrome routine meteorological report.
@@ -25,6 +27,7 @@ Please remember that the exact weather conditions at your location may differ gr
 By default the program gets METAR data with
 .BR libcurl (3)
 provided by NOAA (National Oceanic and Atmospheric Administration). There are a couple of formats to print out the decoded data.
+
 
 .SH OPTIONS
 Options can be combined:
@@ -77,9 +80,11 @@ Print raw METAR data string.
 .IP -v
 Show verbose information during report fetching and parsing.
 
+
 .SH FILES
 .B metar
 doesn't use any files (even config ones).
+
 
 .SH ENVIRONMENT
 If the environment variable
@@ -89,6 +94,7 @@ is set,
 will attempt to download the weather report from that location, instead of default. The value of
 .I METARURL
 will be postfixed with the capitalized station ID, followed by the .TXT extension.
+
 
 .SH DIAGNOSTICS
 .B METAR station FOOO not found in NOAA data.
@@ -101,6 +107,7 @@ was not able to retrieve information for station FOOO. Most likely you requested
 .BR libcurl (3)
 was unable to get requested URL. Most likely you were not connected to internet or you hadn't set your proxy correct. Refer to libcurl documentation about given error code.
 
+
 .SH TODO
 Test and sanitize
 .B metar
@@ -112,11 +119,10 @@ will also not parse:
 .br
 * visibilities given in fractions (e.g. 1/4SM)
 .br
-* trend forecasts (TEMPO, PROB, BECMG)
+* trend forecasts and related (BECMG, TEMPO, PROB)
 .br
 * runway stuff.
 
-Add automatic mapping between ICAO codes and station name.
 
 .SH AUTHOR
 Original author of
@@ -126,12 +132,14 @@ Man page completely rewritten and
 .B metar
 further improved by Antti Louko <antti@may.fi>.
 
+
 .SH SEE ALSO
 Raw METAR data file directory:
 .B http://tgftp.nws.noaa.gov/data/observations/metar/stations
 
 List of weather observation stations, including possible ICAO airport codes:
 .B http://weather.noaa.gov/data/nsd_bbsss.txt
+
 
 .SH REFERENCES
 .B WMO-No. 306

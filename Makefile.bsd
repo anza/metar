@@ -1,0 +1,29 @@
+OBJS = src/main.c src/metar.c
+CC = cc
+CFLAGS = -Wall -lcurl
+OUT = metar
+
+prefix = /usr/local
+binprefix =
+bindir = $(prefix)/bin
+mandir = $(prefix)/man/man1
+
+BSDFLAGS = -I/usr/local/include -L/usr/local/lib
+
+
+all: metar
+
+metar: $(OBJS)
+	$(CC) $(CFLAGS) $(BSDFLAGS) $(OBJS) -o $(OUT)
+	cat metar.1 | gzip > metar.1.gz
+
+install: 
+	install metar $(bindir)
+	mkdir -p $(mandir)
+	install metar.1.gz $(mandir)
+
+deinstall:
+	rm $(bindir)/metar $(mandir)/metar.1.gz
+
+clean:
+	\rm metar metar.1.gz

@@ -18,9 +18,8 @@ does is basically
 and installs the executable and manpage to ```/usr/local```.
 
 ### BSD
-Tested on FreeBSD with the curl port: /usr/ports/ftp/curl; 
-
-Uncomment ```BSD``` from Makefile, then run ```make``` and ```make install```.
+Tested on FreeBSD with the curl port: /usr/ports/ftp/curl;
+```mv Makefile.bsd Makefile```, then run ```make``` and ```make install```.
 
 Alternatively, compile with:
 

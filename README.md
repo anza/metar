@@ -1,8 +1,8 @@
-# metar - aerodrome routine meteorological reports (METAR) fetcher and parser
+# metar - METAR data fetcher and parser
 
-*metar* fetches the information of current weather conditions of
-specified weather observation stations and decodes it into more easily
-readable format.
+**metar** fetches *aerodrome routine meteorological reports* (METAR) which 
+contain information about current weather conditions of specified weather 
+observation stations and decodes it into more easily readable format.
 
 ## Requirements
 libcurl with development headers, eg. ```libcurl4-openssl-dev``` on Debian.
@@ -18,10 +18,9 @@ does is basically
 and installs the executable and manpage to ```/usr/local```.
 
 ### BSD
-Tested with FreeBSD.
+Tested on FreeBSD with the curl port: /usr/ports/ftp/curl; 
 
-On FreeBSD libcurl comes with the curl port: /usr/ports/ftp/curl;
-Uncomment ```BSDFLAGS``` from Makefile and run ```make```.
+Uncomment ```BSD``` from Makefile, then run ```make``` and ```make install```.
 
 Alternatively, compile with:
 

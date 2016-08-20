@@ -4,9 +4,9 @@
 ## Codes
 
 ### intensity or proximity
-- light
-  moderate (no qualifier)
-+ heavy or well developed
+`-` light
+` ` moderate (no qualifier)
+`+` heavy or well developed
 VC vicinity
 
 ### descriptors
@@ -53,7 +53,7 @@ RE recent ‡
 
 ## Notes
 
-† not in WMO-306, only for compatibility with OFCM/NOAA FMH-1
+† not in WMO-306, only for compatibility with OFCM/NOAA FMH-1  
 ‡ according to WMO-306 FM 15-XV METAR 15.13.2
 
 The official description may slightly vary between WMO-306 and FMH-1

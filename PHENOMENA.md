@@ -4,51 +4,51 @@
 ## Codes
 
 ### intensity or proximity
-`-` light
-` ` moderate (no qualifier)
-`+` heavy or well developed
-VC vicinity
+`-` light  
+` ` moderate (no qualifier)  
+`+` heavy or well developed  
+VC vicinity  
 
 ### descriptors
-MI shallow
-BC patches
-PR partial
-DR low drifting
-BL blowing
-SH showers
-TS thunderstorm
-FZ freezing
+MI shallow  
+BC patches  
+PR partial  
+DR low drifting  
+BL blowing  
+SH showers  
+TS thunderstorm  
+FZ freezing  
 
 ### precipitation
-DZ drizzle
-RA rain
-SN snow
-SG snow grains
-IC ice crystals †
-PL ice pellets
-GR hail
-GS small hail/snow pellets
-UP unknown precipitation
+DZ drizzle  
+RA rain  
+SN snow  
+SG snow grains  
+IC ice crystals †  
+PL ice pellets  
+GR hail  
+GS small hail/snow pellets  
+UP unknown precipitation  
 
 ### obscuration
-BR mist
-FG fog
-FU smoke
-VA volcanic ash
-DU widespread dust
-SA sand
-HZ haze
-PY spray †
+- BR mist
+- FG fog
+- FU smoke
+- VA volcanic ash
+- DU widespread dust
+- SA sand
+- HZ haze
+- PY spray †
 
 ### other
-PO dust/sand whirls
-SQ squalls
-FC funnel cloud
-SS sand storm
-DS dust storm
+PO dust/sand whirls  
+SQ squalls  
+FC funnel cloud  
+SS sand storm  
+DS dust storm  
 
 ### recent
-RE recent ‡
+RE recent ‡  
 
 
 ## Notes

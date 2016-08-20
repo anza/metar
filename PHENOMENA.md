@@ -1,5 +1,5 @@
 # INFORMATION GROUP CODES FOR REPORTING WEATHER PHENOMENA IN METAR REPORTS
-*According to WMO-306 [1] Code Table 4678*
+*According to WMO-306 [[1]] Code Table 4678*
 
 ## Codes
 

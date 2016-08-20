@@ -4,7 +4,7 @@
 contain information about current weather conditions of specified weather
 observation stations and decodes it into more easily readable format.
 
-For reference, the codes this tool understands are listed in [PHENOMENA.md](PHENOMENA.md).
+For reference, the weather phenomena reporting codes this tool understands are listed in [PHENOMENA.md](PHENOMENA.md).
 
 ## Requirements
 libcurl with development headers, eg. ```libcurl4-openssl-dev``` on Debian.

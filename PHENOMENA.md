@@ -31,14 +31,14 @@ GS small hail/snow pellets
 UP unknown precipitation  
 
 ### obscuration
-BR mist
-FG fog
-FU smoke
-VA volcanic ash
-DU widespread dust
-SA sand
-HZ haze
-PY spray †
+BR mist  
+FG fog  
+FU smoke  
+VA volcanic ash  
+DU widespread dust  
+SA sand  
+HZ haze  
+PY spray †  
 
 ### other
 PO dust/sand whirls  

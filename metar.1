@@ -2,7 +2,7 @@
 .\" man page for metar(1)
 .\" nroff -man -Tascii metar.1 | less
 
-.TH METAR 1 "August 2016" "metar 1.94" "User Commands" "metar"
+.TH METAR 1 "July 2017" "metar 1.95" "User Commands" "metar"
 .SH NAME
 metar \- fetch aerodrome routine meteorological reports (METAR) and present the information within.
 
@@ -22,25 +22,25 @@ METAR is a way to display a comprehensive overview of current weather conditions
 Because METAR is primarily used by aviation we refer to weather stations with the codes of airports when we want to get a report from a certain site.
 The codes are assigned by ICAO (International Civil Aviation Organization) and most (but not all) ICAO-coded aerodromes have a METAR reporting system whose data can be accessed for example with this tool. Please check the end of this file to obtain a list of all airport ICAO codes.
 
-Please remember that the exact weather conditions at your location may differ greatly from the observation data unless you are located in the immediate vicinity of the observation site. Usually the information is nonetheless a passable approximation of the weather conditions for the surrounding area too.
+Please remember that the exact weather conditions at your location may differ greatly from the observation data unless you are located in the immediate vicinity of the observation site. Many times, the information is nonetheless a passable approximation of the weather conditions also for the surrounding area.
 
-By default the program gets METAR data with
-.BR libcurl (3)
-provided by NOAA (National Oceanic and Atmospheric Administration). There are a couple of formats to print out the decoded data.
+By default the program gets METAR data provided by NOAA (National Oceanic and Atmospheric Administration) with
+.BR libcurl (3).
+There are a couple of formats to print out the decoded data.
 
 
 .SH OPTIONS
 Options can be combined:
 .B metar \-re
 .I station
-would give you raw METAR data and extended brief report. Adding
+would give you raw METAR data (-r) and extended brief report (-e). Adding
 .B \-d
 would add full decoded report. You can also give more than one station and get the desired report from each.
 
 .IP -b
 Briefly decode retrieved METAR report with the most essential information on a single line (no line breaks). This will print all weather conditions but not the longer explanations resulting from e.g. NOSIG, CAVOK or SNOCLO.
 
-This is the default when no output options are given.
+This is the default behavior when no output options are given.
 
 .IP -d
 Decode retrieved METAR reports with a multi-line summary. This gives all information that
@@ -49,7 +49,7 @@ can provide:
 .br
 * observation station, day, time
 .br
-* wind direction, speed (gust if it differs from speed)
+* wind direction, speed (also gust if it differs from speed)
 .br
 * visibility
 .br
@@ -125,12 +125,13 @@ will also not parse:
 
 
 .SH AUTHOR
+This version of
+.B metar
+and the man page is made by Antti Louko <antti@may.fi>.
+
 Original author of
 .B metar
-and this man page is Kees Leune <kees@leune.org>.
-Man page completely rewritten and
-.B metar
-further improved by Antti Louko <antti@may.fi>.
+and the first version of man page is Kees Leune <kees@leune.org>.
 
 
 .SH SEE ALSO
@@ -138,7 +139,7 @@ Raw METAR data file directory:
 .B http://tgftp.nws.noaa.gov/data/observations/metar/stations
 
 List of weather observation stations, including possible ICAO airport codes:
-.B http://weather.noaa.gov/data/nsd_bbsss.txt
+.B http://tgftp.nws.noaa.gov/data/nsd_bbsss.txt
 
 
 .SH REFERENCES

@@ -57,7 +57,7 @@ char *strupc(char *line) {
 
 /* show brief usage info */
 void usage(char *name) {
-  printf("metar 1.94 %s %s\n", __DATE__, __TIME__);
+  printf("metar 1.95 %s %s\n", __DATE__, __TIME__);
   printf("Usage: %s [options] stations\n", name);
   printf("Options\n");
   printf("   -b        decode briefly (default)\n");
